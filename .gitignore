@@ -1,0 +1,11 @@
+/.mcp.json
+/.idea/
+.gradle/
+build/
+.kotlin/
+node_modules/
+/portal/dist/
+/portal/.astro/
+/portal/public/api/
+.env
+/portal/src/content/docs/releases.md

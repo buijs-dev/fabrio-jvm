@@ -1,0 +1,43 @@
+# Third-party libraries and build tooling of Fabrio JVM, registered by Gradle as `libs`. Fabrio's
+# own modules are project dependencies and need no entry here; consumers get their versions from
+# the fabrio-bom. Each slice adds what its modules need.
+[versions]
+java = "25"
+
+# Build tooling
+dokka = "2.2.0"
+jacoco = "0.8.15"
+kotlin = "2.4.21"
+kover = "0.9.11"
+buijs-style = "1.0.0-SNAPSHOT"
+maven-publish = "0.37.0"
+rialto = "0.1.0-SNAPSHOT"
+
+# Libraries
+assertj = "3.27.7"
+junit = "6.1.2"
+logback = "1.6.4"
+
+[libraries]
+assertj = { group = "org.assertj", name = "assertj-core", version.ref = "assertj" }
+junit-api = { group = "org.junit.jupiter", name = "junit-jupiter-api", version.ref = "junit" }
+junit-engine = { group = "org.junit.jupiter", name = "junit-jupiter-engine", version.ref = "junit" }
+junit-params = { group = "org.junit.jupiter", name = "junit-jupiter-params", version.ref = "junit" }
+junit-platform = { group = "org.junit.platform", name = "junit-platform-launcher", version.ref = "junit" }
+logback = { group = "ch.qos.logback", name = "logback-classic", version.ref = "logback" }
+
+# Rialto: the contract model, loading and validation (package dev.buijs.rialto.contract)
+rialto-core = { group = "dev.buijs.rialto", name = "rialto-core", version.ref = "rialto" }
+
+# Gradle plugins, as dependencies of build-logic
+dokka-plugin = { group = "org.jetbrains.dokka", name = "dokka-gradle-plugin", version.ref = "dokka" }
+kotlin-plugin-jvm = { group = "org.jetbrains.kotlin.jvm", name = "org.jetbrains.kotlin.jvm.gradle.plugin", version.ref = "kotlin" }
+kover-plugin = { group = "org.jetbrains.kotlinx", name = "kover-gradle-plugin", version.ref = "kover" }
+buijs-style-plugin = { group = "dev.buijs.style", name = "style-gradle-plugin", version.ref = "buijs-style" }
+maven-publish-plugin = { group = "com.vanniktech", name = "gradle-maven-publish-plugin", version.ref = "maven-publish" }
+
+[bundles]
+test = ["assertj", "junit-api", "junit-engine", "junit-params", "junit-platform", "logback"]
+
+[plugins]
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
