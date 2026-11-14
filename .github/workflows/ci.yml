@@ -1,0 +1,57 @@
+name: CI
+
+# Builds and tests every module with the style check, and builds the portal. The safety net
+# (ReferenceOutputTest) runs with the tests; its reference output is committed, so CI needs no
+# other repository. rialto-core and the style plugin (dev.buijs.style) come from the snapshots on Repsy.
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ github.token }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Java & Gradle
+        uses: buijs-dev/ci-templates/.github/actions/setup-java@main
+        with:
+          root-dir: .
+
+      - name: Build and test
+        run: ./gradlew build kotlinStyleCheck --stacktrace
+
+      - name: Reference coverage
+        if: always()
+        run: cat fabrio-codegen/build/reports/reference/coverage.txt >> "$GITHUB_STEP_SUMMARY" || true
+
+  portal:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: portal
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Node
+        uses: actions/setup-node@v5
+        with:
+          node-version-file: portal/.nvmrc
+          cache: npm
+          cache-dependency-path: portal/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build and check the links
+        run: npm run build
