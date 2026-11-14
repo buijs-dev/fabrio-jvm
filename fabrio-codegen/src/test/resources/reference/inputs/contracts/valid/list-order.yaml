@@ -1,0 +1,52 @@
+# capabilities: domain.entity, domain.relationship, domain.value-object, persistence.atomic-multi-write, persistence.managed-link, persistence.order.data, persistence.order.position, persistence.owned-child, persistence.read, persistence.reconcile.identity, persistence.reconcile.replace-all
+# Lists that keep the order the client sends in a position column, lists sorted by their data, and a set without
+# an order (P4.13, P4.14, P4.15, P4.16).
+rialto: "1.0.0"
+info: {name: list-order, version: 1.0.0}
+sources:
+  db: {kind: sql, path: ../support/list-order.sql, dialect: postgresql}
+types:
+  Step: {kind: entity, identity: [id], properties: {id: {type: uuid}, title: {type: string}}}
+  Comment:
+    kind: entity
+    identity: [id]
+    properties: {id: {type: uuid}, postedAt: {type: instant}, text: {type: string}}
+  Reviewer: {kind: entity, identity: [id], properties: {id: {type: uuid}, name: {type: string}}}
+  Label: {kind: entity, identity: [id], properties: {id: {type: uuid}, name: {type: string}}}
+  PhotoSize: {kind: value, wraps: int64}
+  Photo:
+    kind: entity
+    identity: [id]
+    properties: {id: {type: uuid}, size: {type: PhotoSize}, takenOn: {type: date, nullable: true}}
+  Recipe:
+    kind: entity
+    identity: [id]
+    properties:
+      id: {type: uuid}
+      steps: {type: list<Step>, relation: owned}
+      comments: {type: list<Comment>, relation: owned}
+      reviewers: {type: list<Reviewer>, relation: reference}
+      labels: {type: set<Label>, relation: reference}
+      photos: {type: list<Photo>, relation: reference}
+storage:
+  Step: {table: db#step, columns: {id: id, title: title}}
+  Comment: {table: db#comment, columns: {id: id, postedAt: posted_at, text: text}}
+  Reviewer: {table: db#reviewer, columns: {id: id, name: name}}
+  Label: {table: db#label, columns: {id: id, name: name}}
+  Photo: {table: db#photo, columns: {id: id, size: size, takenOn: taken_on}}
+  Recipe:
+    table: db#recipe
+    storageKey: storage_id
+    columns: {id: public_id}
+    children:
+      # The order the client sends, also after reconciling by identity.
+      steps: {parentKey: recipe_id, reconcile: identity, onDelete: cascade, order: position}
+      # Newest first; the order sent is not kept.
+      comments: {parentKey: recipe_id, reconcile: replaceAll, onDelete: cascade, orderBy: [postedAt desc, text asc]}
+    links:
+      # A reviewer added on its own comes last.
+      reviewers: {table: db#recipe_reviewer, ownerKey: recipe_id, targetKey: reviewer_id, onDelete: cascade, order: position}
+      # A set has no order; a read sorts on the storage key.
+      labels: {table: db#recipe_label, ownerKey: recipe_id, targetKey: label_id, onDelete: cascade}
+      # Read-only: an order of the data, through a wrapper, and a nullable date.
+      photos: {ownerKey: recipe_id, orderBy: [takenOn desc, size asc]}

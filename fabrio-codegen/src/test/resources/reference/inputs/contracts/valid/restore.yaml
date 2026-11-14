@@ -1,0 +1,55 @@
+# capabilities: domain.entity, lifecycle.delete, lifecycle.restore, pagination: cursor, persistence.delete.soft, persistence.read, query.pagination.cursor, query.sort.colon, rest.client [client], rest.model, rest.server [server], sort: colon
+# Revoking an editor keeps the row and who revoked it; it can be restored and read explicitly, also in a bounded list
+# (P6.3, P6.10, L3.7, R1.7, R2.7).
+rialto: "1.0.0"
+info: {name: restore, version: 1.0.0}
+sources:
+  api: {kind: openapi, path: ../support/editors.json, version: 1.0.0, status: current}
+  db: {kind: sql, path: ../support/editors-migrations/*.sql, dialect: postgresql}
+types:
+  Editor:
+    kind: entity
+    identity: [id]
+    properties:
+      id: {type: uuid}
+      name: {type: string}
+      revokedAt: {type: instant, nullable: true}
+storage:
+  Editor:
+    table: db#editor
+    columns: {id: id, name: name, revokedAt: revoked_at}
+    delete: {soft: revoked_at, by: revoked_by, restore: true}
+operations:
+  revokeEditor:
+    rest: api#/paths/~1editors~1{editorId}/delete
+    parameters: {editorId: id}
+    lifecycle: delete
+    subject: Editor
+  restoreEditor:
+    rest: api#/paths/~1editors~1{editorId}~1restoration/post
+    parameters: {editorId: id}
+    lifecycle: restore
+    subject: Editor
+    output: Editor
+  getEditor:
+    rest: api#/paths/~1editors~1{editorId}/get
+    parameters: {editorId: id}
+    output: Editor
+    deleted: include
+  suggestEditors:
+    rest: api#/paths/~1editors~1suggestions/get
+    parameters: {q: name}
+    output: list<Editor>
+    maxItems: 10
+    deleted: include
+  listEditors:
+    rest: api#/paths/~1editors/get
+    output: Editor
+    deleted: include
+    list:
+      fields:
+        id: {sort: true}
+        revokedAt: {sort: true}
+      sort: {default: [{field: id, direction: asc}], tiebreaker: id, encoding: colon}
+      pagination: {strategy: cursor, limit: {default: 20, max: 100}}
+      wire: {parameters: {cursor: cursor, limit: limit, sort: sort}, response: {items: /items, next: /next}}

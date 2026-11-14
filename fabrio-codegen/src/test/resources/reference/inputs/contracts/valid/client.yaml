@@ -1,0 +1,89 @@
+# capabilities: auth.client.authorization-code [client], auth.server [server], auth.view [view], domain.entity, domain.shape, errors.client [client], errors.server [server], errors.view [view], filter: rsql, identify: member, lifecycle.create, location: pointer, mapping.direction.reverse, pagination: cursor, presentation.action [view], presentation.form [view], presentation.list [view], presentation.navigation [view], presentation.read-view [view], query.filter.rsql, query.pagination.cursor, query.sort.colon, rest.client [client], rest.model, rest.server [server], sort: colon
+# Client: a signed-in web client with a task list, a read view with an action, and a form, each on its own route;
+# the list filters with RSQL, sorts with colon and pages with a cursor.
+rialto: "1.0.0"
+info: {name: client, version: 1.0.0}
+sources:
+  api: {kind: openapi, path: ../support/client.json, version: 1.0.0, status: current}
+auth:
+  providers: {main: {issuer: https://auth.example.invalid}}
+  clients:
+    web: {provider: main, clientId: tasks-web, flow: authorizationCode, scopes: [openid]}
+types:
+  Task:
+    kind: entity
+    identity: [id]
+    properties:
+      id: {type: uuid}
+      title: {type: string, minLength: 1}
+      done: {type: boolean, default: {value: false, phase: business}}
+shapes:
+  NewTask:
+    source: Task
+    command: create
+    properties:
+      id: {role: caller}
+      title: {role: caller}
+errors:
+  format: problem-details
+  validationStatus: 400
+  identify: member
+  wire:
+    code: /code
+    fieldErrors: /errors
+    field: {location: /pointer, code: /code, detail: /detail}
+    locationFormat: pointer
+mappings:
+  - {source: api#/components/schemas/Task, target: Task, direction: both}
+operations:
+  listTasks:
+    rest: api#/paths/~1tasks/get
+    output: Task
+    principals: [user]
+    list:
+      fields:
+        id: {sort: true}
+        title: {filter: [eq, ilike], sort: true}
+        done: {filter: [eq]}
+      filter: {encoding: rsql, maxDepth: 3}
+      sort: {encoding: colon, tiebreaker: id}
+      pagination: {strategy: cursor, limit: {default: 20, max: 100}}
+      wire:
+        parameters: {filter: filter, sort: sort, limit: limit, cursor: cursor}
+        response: {items: /items, next: /nextCursor}
+  getTask:
+    rest: api#/paths/~1tasks~1{taskId}/get
+    parameters: {taskId: id}
+    output: Task
+    principals: [user]
+  createTask:
+    rest: api#/paths/~1tasks/post
+    lifecycle: create
+    input: NewTask
+    output: Task
+    principals: [user]
+  completeTask:
+    rest: api#/paths/~1tasks~1{taskId}~1completion/post
+    parameters: {taskId: id}
+    output: Task
+    handler: authored
+    principals: [user]
+views:
+  TaskList:
+    route: /tasks
+    list:
+      operation: listTasks
+      columns: [title, done]
+      filters:
+        search: {field: title, operator: ilike}
+      pageSize: 20
+  TaskDetail:
+    route: /tasks/{id}
+    load: getTask
+    actions:
+      complete: {operation: completeTask, confirm: true}
+  NewTaskForm:
+    route: /tasks/new
+    submit: createTask
+    fields:
+      title: {label: newTask.fields.title}

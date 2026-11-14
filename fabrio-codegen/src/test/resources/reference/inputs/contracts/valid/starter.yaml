@@ -1,0 +1,58 @@
+# capabilities: domain.entity, domain.shape, domain.value-object, errors.client [client], errors.server [server], identify: member, location: pointer, mapping.direction.reverse, mapping.enum, mapping.wrapper, rest.client [client], rest.model, rest.server [server]
+# Starter (server): an entity with a wrapped identity and an enum, a value object and a shape, REST operations whose
+# models map both ways, and errors identified by member and located by JSON Pointer.
+rialto: "1.0.0"
+info: {name: starter, version: 1.0.0}
+sources:
+  api: {kind: openapi, path: ../support/starter.json, version: 1.0.0, status: current}
+types:
+  ParcelId: {kind: value, wraps: uuid}
+  Size: {kind: enum, members: [small, large]}
+  Parcel:
+    kind: entity
+    identity: [id]
+    properties:
+      id: {type: ParcelId}
+      size: {type: Size}
+      weight: {type: int32, minimum: 1}
+  Label:
+    kind: value
+    properties:
+      carrier: {type: string}
+      code: {type: string}
+shapes:
+  RegisterParcel:
+    source: Parcel
+    properties:
+      size: {role: caller}
+      weight: {role: caller}
+errors:
+  format: problem-details
+  validationStatus: 400
+  identify: member
+  wire:
+    code: /code
+    fieldErrors: /errors
+    field: {location: /pointer, code: /code, detail: /detail}
+    locationFormat: pointer
+  codes:
+    tooHeavy: {category: validation, title: Parcel too heavy, status: 422}
+mappings:
+  - {source: api#/components/schemas/Parcel, target: Parcel, direction: both}
+  - {source: api#/components/schemas/Label, target: Label, direction: both}
+operations:
+  registerParcel:
+    rest: api#/paths/~1parcels/post
+    input: RegisterParcel
+    output: Parcel
+    handler: authored
+    errors: [tooHeavy]
+  getParcel:
+    rest: api#/paths/~1parcels~1{parcelId}/get
+    parameters: {parcelId: id}
+    output: Parcel
+  printLabel:
+    rest: api#/paths/~1labels/post
+    input: Label
+    output: Label
+    handler: authored

@@ -1,0 +1,53 @@
+# capabilities: auth.server [server], domain.entity, domain.shape, domain.value-provider, lifecycle.create, lifecycle.delete, persistence.insert, persistence.read, rest.client [client], rest.model, rest.server [server]
+# A note of one user in one tenant: every read, list and delete filters on both scope columns, creation writes them,
+# and a note outside them is not found. The owner is shown read only (P6.11, S4.1, S4.2).
+rialto: "1.0.0"
+info: {name: scope, version: 1.0.0}
+sources:
+  api: {kind: openapi, path: ../support/scope.json, version: 1.0.0, status: current}
+  db: {kind: sql, path: ../support/scope.sql, dialect: postgresql}
+auth:
+  providers: {main: {issuer: https://auth.example.invalid}}
+  claims: {subject: sub, tenant: tenant_id}
+  scopes: {notes: {description: Read and write own notes, scheme: api#/components/securitySchemes/oauth}}
+types:
+  Note:
+    kind: entity
+    identity: [id]
+    properties:
+      id: {type: uuid}
+      text: {type: string, minLength: 1, maxLength: 200}
+      owner: {type: string}
+shapes:
+  CreateNote:
+    source: Note
+    command: create
+    properties:
+      id: {role: application, provider: newNoteId}
+      text: {role: caller}
+storage:
+  Note:
+    table: db#note
+    columns: {id: id, text: text, owner: owner_id}
+    scope:
+      - {column: tenant_id, source: tenant}
+      - {column: owner_id, source: actor}
+operations:
+  listNotes:
+    rest: api#/paths/~1notes/get
+    output: list<Note>
+    maxItems: 50
+  createNote:
+    rest: api#/paths/~1notes/post
+    lifecycle: create
+    input: CreateNote
+    output: Note
+  getNote:
+    rest: api#/paths/~1notes~1{noteId}/get
+    parameters: {noteId: id}
+    output: Note
+  deleteNote:
+    rest: api#/paths/~1notes~1{noteId}/delete
+    parameters: {noteId: id}
+    lifecycle: delete
+    subject: Note

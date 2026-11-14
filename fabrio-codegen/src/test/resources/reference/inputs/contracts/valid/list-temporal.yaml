@@ -1,0 +1,33 @@
+# capabilities: domain.entity, pagination: cursor, query.pagination.cursor
+# Query fields of every scalar type that can be one, each with the operators its order allows (query, Values per
+# type): ordering on time and duration, exact equality on float64, equality only on period.
+rialto: "1.0.0"
+info: {name: list-temporal, version: 1.0.0}
+types:
+  Slot:
+    kind: entity
+    identity: [id]
+    properties:
+      id: {type: uuid}
+      opens: {type: time}
+      starts: {type: localDateTime}
+      booked: {type: offsetDateTime}
+      local: {type: zonedDateTime}
+      length: {type: duration}
+      every: {type: period}
+      weight: {type: float64}
+operations:
+  findSlots:
+    output: Slot
+    list:
+      fields:
+        id: {sort: true}
+        opens: {filter: [eq, gt, ge, lt, le, in], sort: true}
+        starts: {filter: [gt, ge, lt, le], sort: true}
+        booked: {filter: [gt, lt, in]}
+        local: {filter: [ge, lt]}
+        length: {filter: [gt, le, in], sort: true}
+        every: {filter: [eq, ne, in, out]}
+        weight: {filter: [eq, in, gt]}
+      sort: {tiebreaker: id}
+      pagination: {strategy: cursor, limit: {default: 20, max: 100}}

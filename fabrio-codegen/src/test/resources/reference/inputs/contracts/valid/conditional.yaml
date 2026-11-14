@@ -1,0 +1,14 @@
+# capabilities: domain.entity, rest.client [client], rest.conditional-read, rest.model, rest.server [server]
+# A read answered with 304 while the client has the current representation (R6).
+rialto: "1.0.0"
+info: {name: conditional, version: 1.0.0}
+sources:
+  api: {kind: openapi, path: ../support/conditional.json, version: 1.0.0, status: current}
+types:
+  Thing: {kind: entity, identity: [id], properties: {id: {type: uuid}, colour: {type: string}}}
+operations:
+  getThing:
+    rest: api#/paths/~1things~1{thingId}/get
+    parameters: {thingId: id}
+    output: Thing
+    conditional: {token: If-None-Match, version: stored}

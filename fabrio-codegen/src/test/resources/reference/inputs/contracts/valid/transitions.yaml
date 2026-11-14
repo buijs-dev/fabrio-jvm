@@ -1,0 +1,33 @@
+# capabilities: domain.entity, domain.shape, domain.shape.partial, lifecycle.transition, lifecycle.update.merge-patch, update: merge-patch
+# An order is approved from draft and rejected from draft or approved, with a reason from the input (L5).
+rialto: "1.0.0"
+info: {name: transitions, version: 1.0.0}
+types:
+  OrderState: {kind: enum, members: [draft, approved, rejected]}
+  Order:
+    kind: entity
+    identity: [id]
+    transitions:
+      property: state
+      rules:
+        approve: {from: [draft], to: approved}
+        reject: {from: [draft, approved], to: rejected}
+    properties:
+      id: {type: uuid}
+      state: {type: OrderState, default: {value: draft, phase: business}}
+      reason: {type: string, nullable: true}
+shapes:
+  RejectOrder:
+    source: Order
+    command: update
+    strategy: merge-patch
+    properties:
+      reason: {role: caller}
+operations:
+  approveOrder:
+    output: Order
+    transition: Order.approve
+  rejectOrder:
+    input: RejectOrder
+    output: Order
+    transition: Order.reject

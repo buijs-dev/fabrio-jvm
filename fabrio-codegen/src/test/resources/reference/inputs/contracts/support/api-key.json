@@ -1,0 +1,102 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "api-key",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/stock/sync": {
+      "post": {
+        "operationId": "syncStock",
+        "security": [
+          {
+            "oauth": [
+              "stock:write"
+            ],
+            "warehouseKey": []
+          },
+          {
+            "oauth": [
+              "stock:admin"
+            ]
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Synced"
+          },
+          "401": {
+            "description": "Not authenticated"
+          }
+        }
+      }
+    },
+    "/stock/import": {
+      "post": {
+        "operationId": "importStock",
+        "security": [
+          {
+            "queryKey": []
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Synced"
+          },
+          "401": {
+            "description": "Not authenticated"
+          }
+        }
+      }
+    },
+    "/stock/export": {
+      "post": {
+        "operationId": "exportStock",
+        "security": [
+          {
+            "cookieKey": []
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Exported"
+          },
+          "401": {
+            "description": "Not authenticated"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "oauth": {
+        "type": "oauth2",
+        "flows": {
+          "clientCredentials": {
+            "tokenUrl": "https://auth.example.invalid/token",
+            "scopes": {
+              "stock:write": "Write stock",
+              "stock:admin": "Administer stock"
+            }
+          }
+        }
+      },
+      "warehouseKey": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-Warehouse-Key"
+      },
+      "queryKey": {
+        "type": "apiKey",
+        "in": "query",
+        "name": "key"
+      },
+      "cookieKey": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "key"
+      }
+    }
+  }
+}

@@ -1,0 +1,47 @@
+# capabilities: domain.entity, domain.shape, domain.value-provider, lifecycle.batch, lifecycle.create, mapping.direction.reverse, persistence.insert, persistence.optimistic-concurrency, persistence.read, rest.client [client], rest.model, rest.server [server]
+# Every property has its column, the mapping covers both directions, the wire version is the stored one,
+# and the batch wire resolves (M2.8, M2.9, P1.5, P1.6, L4.5).
+rialto: "1.0.0"
+info: {name: coverage, version: 1.0.0}
+sources:
+  api: {kind: openapi, path: ../support/coverage.json, version: 1.0.0, status: current}
+  db: {kind: sql, path: ../support/coverage-migrations/*.sql, dialect: postgresql}
+types:
+  Thing:
+    kind: entity
+    identity: [id]
+    properties:
+      id: {type: uuid}
+      colour: {type: string}
+      note: {type: string, nullable: true}
+      size: {type: int32, nullable: true}
+storage:
+  Thing:
+    table: db#thing
+    storageKey: storage_id
+    version: version
+    columns: {id: public_id, colour: colour, note: note, size: size}
+mappings:
+- source: api#/components/schemas/Thing
+  target: Thing
+  direction: both
+  properties:
+    version: {version: stored}
+shapes:
+  CreateThing:
+    source: Thing
+    command: create
+    properties:
+      id: {role: application, provider: newThingId}
+      colour: {role: caller}
+      note: {role: caller}
+operations:
+  createThings:
+    rest: api#/paths/~1things~1batch/post
+    lifecycle: create
+    input: CreateThing
+    output: Thing
+    batch:
+      atomic: false
+      maxItems: 20
+      wire: {items: /items, results: /results, value: /value, problem: /problem}

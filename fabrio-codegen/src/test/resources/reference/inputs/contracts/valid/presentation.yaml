@@ -1,0 +1,126 @@
+# capabilities: domain.entity, domain.projection, domain.relationship, domain.shape, domain.shape.partial, domain.value-object, lifecycle.update.merge-patch, pagination: cursor, presentation.action [view], presentation.condition [view], presentation.form [view], presentation.link [view], presentation.list [view], presentation.list.action [view], presentation.list.chips [view], presentation.list.unpaged [view], presentation.list.where [view], presentation.navigation [view], presentation.navigation.menu [view], presentation.options [view], presentation.partial-edit [view], presentation.read-view [view], presentation.tabs [view], query.count.operation, query.pagination.cursor, update: merge-patch
+# Presentation: a menu with a badge, a list whose rows open a view and show chips, a list of the signed-in actor's
+# matches, a detail view with a tab, a link, a choice list and conditions, a tab of unpaged rows with actions, one
+# naming its source, whose rows open a view by their own id, and a choice of a projection that renames the identity
+# (U2.11, U3.10, U3.11, U5.9, U5.10, U5.11, U6.5, U6.6, U6.7).
+rialto: "1.0.0"
+info: {name: presentation, version: 1.0.0}
+types:
+  MatchId: {kind: value, wraps: uuid}
+  VenueId: {kind: value, wraps: uuid}
+  MatchState: {kind: enum, members: [draft, final]}
+  Venue:
+    kind: entity
+    identity: [id]
+    properties:
+      id: {type: VenueId}
+      name: {type: string, minLength: 1}
+  Player:
+    kind: entity
+    identity: [id]
+    properties:
+      id: {type: uuid}
+      name: {type: string}
+  Match:
+    kind: entity
+    identity: [id]
+    properties:
+      id: {type: MatchId}
+      title: {type: string}
+      state: {type: MatchState}
+      recordedBy: {type: string}
+      venue: {type: VenueId, nullable: true, relation: reference}
+      players: {type: list<Player>, relation: reference}
+      note: {type: string, nullable: true}
+  VenueChoice: {kind: projection, source: Venue, properties: {key: id, name: name}}
+shapes:
+  EditMatch:
+    source: Match
+    command: update
+    strategy: merge-patch
+    partial: true
+    properties:
+      venue: {role: caller, as: identity}
+      note: {role: caller}
+operations:
+  listMatches:
+    output: Match
+    list:
+      fields:
+        id: {sort: true}
+        recordedBy: {filter: [eq]}
+        state: {filter: [eq, in]}
+      sort: {tiebreaker: id}
+      pagination: {strategy: cursor, limit: {default: 20, max: 100}}
+      count: {strategy: operation, operation: countMatches, response: /count}
+  countMatches: {handler: authored}
+  getMatch: {parameters: {matchId: id}, output: Match}
+  editMatch: {parameters: {matchId: id}, input: EditMatch, output: Match, handler: authored}
+  finalizeMatch: {parameters: {matchId: id}, output: Match, handler: authored}
+  getVenue: {parameters: {venueId: id}, output: Venue}
+  suggestVenues: {parameters: {q: name}, output: list<Venue>, maxItems: 10, handler: authored}
+  suggestVenueChoices: {parameters: {q: name}, output: list<VenueChoice>, maxItems: 10, handler: authored}
+  getPlayer: {parameters: {playerId: id}, output: Player}
+  benchPlayer: {subject: Player, parameters: {id: id}, handler: authored}
+  getMatchPlayers: {subject: Match, parameters: {matchId: id}, output: list<Player>, maxItems: 50}
+  removePlayer: {subject: Match, parameters: {matchId: id, playerId: players.id}, handler: authored}
+navigation:
+  home: MatchList
+  primary:
+  - {view: MatchList, icon: matches, label: navigation.matches, badge: countMatches}
+  secondary:
+  - {view: MyMatches, icon: mine}
+views:
+  MatchList:
+    route: /matches
+    list:
+      operation: listMatches
+      columns: [title, state, players.name]
+      open: MatchDetail
+  MyMatches:
+    route: /my-matches
+    list:
+      operation: listMatches
+      columns: [title]
+      where: [{field: recordedBy, operator: eq, value: actor}]
+      open: MatchDetail
+  MatchDetail:
+    route: /matches/{id}
+    load: getMatch
+    tabs: [MatchPlayers]
+    fields:
+      venue:
+        edit: editMatch
+        partial: true
+        link: VenueDetail
+        options: {operation: suggestVenues, label: name}
+      note:
+        edit: editMatch
+        partial: true
+        visibleWhen: {state: [draft]}
+        enabledWhen: {recordedBy: actor}
+    actions:
+      finalize:
+        operation: finalizeMatch
+        visibleWhen: {state: [draft]}
+        enabledWhen: {state: [draft], recordedBy: actor}
+  MatchPlayers:
+    route: /matches/{id}/players
+    list:
+      operation: getMatchPlayers
+      columns: [name]
+      open: PlayerDetail
+      actions:
+        remove: {operation: removePlayer, confirm: true}
+        bench: {operation: benchPlayer, parameters: {id: row.id}}
+  VenueDetail:
+    route: /venues/{id}
+    load: getVenue
+  PlayerDetail:
+    route: /players/{id}
+    load: getPlayer
+  MatchVenue:
+    route: /matches/{id}/venue
+    load: getMatch
+    fields:
+      venue: {edit: editMatch, partial: true, options: {operation: suggestVenueChoices, label: name}}

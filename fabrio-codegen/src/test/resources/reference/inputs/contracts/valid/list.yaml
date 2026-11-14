@@ -1,0 +1,22 @@
+# capabilities: domain.entity, pagination: offset, query.pagination.offset
+rialto: "1.0.0"
+info: {name: list, version: 1.0.0}
+types:
+  Thing:
+    kind: entity
+    identity: [id]
+    properties:
+      id: {type: uuid}
+      name: {type: string}
+      size: {type: int32}
+operations:
+  # A local list (no rest): a search generated code offers as a call, without wire (Q1.6, Q1.7).
+  findThings:
+    output: Thing
+    list:
+      fields:
+        id: {sort: true}
+        name: {filter: [eq, ilike], sort: true}
+        size: {filter: [gt, lt, in]}
+      sort: {default: [{field: name, direction: asc}], tiebreaker: id}
+      pagination: {strategy: offset, limit: {default: 25, max: 100}}

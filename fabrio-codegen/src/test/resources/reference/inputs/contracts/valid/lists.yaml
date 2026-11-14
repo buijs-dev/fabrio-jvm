@@ -1,0 +1,73 @@
+# capabilities: auth.server [server], domain.entity, domain.relationship, domain.shape, domain.shape.partial, domain.value-provider, lifecycle.batch, lifecycle.create, pagination: cursor, query.pagination.cursor, rest.client [client], rest.model, rest.server [server]
+# A bounded suggestion list, a list in a fixed order with a descending tiebreaker, a batch on a bare array, a count
+# of a club's lines, and the signed-in person (R1.7, R1.8, R2.7, Q1.3, Q3.1, L4.5). Person maps to an alias of
+# its schema, which names the schema the suggested people are.
+rialto: "1.0.0"
+info: {name: lists, version: 1.0.0}
+sources:
+  api: {kind: openapi, path: ../support/lists.json, version: 1.0.0, status: current}
+auth:
+  providers: {main: {issuer: https://auth.example.invalid}}
+types:
+  Person: {kind: entity, identity: [id], properties: {id: {type: uuid}, name: {type: string}}}
+  ClubLine: {kind: entity, identity: [id], properties: {id: {type: uuid}, label: {type: string}}}
+  Club:
+    kind: entity
+    identity: [id]
+    properties:
+      id: {type: uuid}
+      name: {type: string}
+      lines: {type: list<ClubLine>, relation: owned}
+mappings:
+  - {source: api#/components/schemas/PersonSuggestion, target: Person, direction: toSource}
+shapes:
+  CreateClub:
+    source: Club
+    command: create
+    properties:
+      id: {role: application, provider: newClubId}
+      name: {role: caller}
+  CountLines:
+    source: ClubLine
+    partial: true
+    properties:
+      label: {role: caller}
+operations:
+  suggestClubs:
+    rest: api#/paths/~1clubs~1suggestions/get
+    parameters: {q: name}
+    output: list<Club>
+    maxItems: 10
+  suggestPeople:
+    rest: api#/paths/~1people~1suggestions/get
+    parameters: {q: name}
+    output: list<Person>
+    maxItems: 10
+  listClubs:
+    rest: api#/paths/~1clubs/get
+    output: Club
+    list:
+      fields:
+        id: {sort: true}
+        name: {sort: true}
+      sort: {fixed: [{field: name, direction: asc}], tiebreaker: {field: id, direction: desc}}
+      pagination: {strategy: cursor, limit: {default: 20, max: 100}}
+      wire: {parameters: {cursor: cursor, limit: limit}, response: {items: /items, next: /next}}
+  createClubs:
+    rest: api#/paths/~1clubs~1batch/post
+    lifecycle: create
+    input: CreateClub
+    output: Club
+    batch:
+      atomic: false
+      maxItems: 50
+      wire: {items: "", results: "", value: /value, problem: /problem, index: /index, status: /status}
+  countLines:
+    rest: api#/paths/~1clubs~1{clubId}~1lines~1count/get
+    input: CountLines
+    subject: Club
+    parameters: {clubId: id, label: label}
+  getMe:
+    rest: api#/paths/~1me/get
+    subject: {type: Person, by: actor}
+    output: Person

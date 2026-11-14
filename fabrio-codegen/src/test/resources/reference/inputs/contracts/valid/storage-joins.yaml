@@ -1,0 +1,82 @@
+# capabilities: domain.entity, domain.relationship, domain.shape, domain.value-object, domain.value-provider, lifecycle.create, persistence.atomic-multi-write, persistence.computed.count, persistence.insert, persistence.join.path, persistence.join.value, persistence.managed-link, persistence.order.data, persistence.owned-child, persistence.read, persistence.reconcile.identity, persistence.reference
+# A value id two joins away, a value id kept as a bigint foreign key, and counts computed in the read
+# (P2.11, P2.12, P2.13).
+rialto: "1.0.0"
+info: {name: storage-joins, version: 1.0.0}
+sources:
+  db: {kind: sql, path: ../support/storage-joins.sql, dialect: postgresql}
+types:
+  GhostPlayerId: {kind: value, wraps: uuid}
+  ClaimRequestId: {kind: value, wraps: uuid}
+  Participant: {kind: entity, identity: [id], properties: {id: {type: uuid}}}
+  ParticipantChange:
+    kind: entity
+    identity: [id]
+    properties:
+      id: {type: uuid}
+      participant: {type: Participant, relation: reference}
+      ghostPlayer: {type: GhostPlayerId, nullable: true}
+      note: {type: string}
+  ClaimEdge:
+    kind: entity
+    identity: [id]
+    properties:
+      id: {type: uuid}
+      createdVia: {type: ClaimRequestId, nullable: true}
+  Member: {kind: entity, identity: [id], properties: {id: {type: uuid}, name: {type: string}}}
+  GroupNote: {kind: entity, identity: [id], properties: {id: {type: uuid}, text: {type: string}}}
+  Group:
+    kind: entity
+    identity: [id]
+    properties:
+      id: {type: uuid}
+      name: {type: string}
+      members: {type: list<Member>, relation: reference}
+      notes: {type: list<GroupNote>, relation: owned}
+      memberCount: {type: int32}
+      noteCount: {type: int64}
+shapes:
+  CreateParticipantChange:
+    source: ParticipantChange
+    command: create
+    properties:
+      id: {role: application, provider: newChangeId}
+      participant: {role: caller, as: identity}
+      note: {role: caller}
+  CreateClaimEdge:
+    source: ClaimEdge
+    command: create
+    properties:
+      id: {role: application, provider: newEdgeId}
+      createdVia: {role: caller}
+storage:
+  Participant: {table: db#participant, storageKey: storage_id, columns: {id: public_id}}
+  ParticipantChange:
+    table: db#participant_change
+    columns:
+      id: id
+      note: note
+      participant: {join: participant_id, table: db#participant, key: public_id}
+      ghostPlayer:
+        join:
+        - {column: participant_id, table: db#participant}
+        - {column: ghost_player_id, table: db#ghost_player}
+        key: public_id
+  ClaimEdge:
+    table: db#claim_edge
+    unique: [[createdVia]]
+    columns:
+      id: id
+      createdVia: {join: created_via_claim_request_id, table: db#claim_request, key: public_id}
+  Member: {table: db#member, columns: {id: id, name: name}}
+  GroupNote: {table: db#group_note, columns: {id: id, text: text}}
+  Group:
+    table: db#app_group
+    columns: {id: id, name: name}
+    links:
+      members: {table: db#group_member, ownerKey: group_id, targetKey: member_id, onDelete: cascade, orderBy: [name asc]}
+    children:
+      notes: {parentKey: group_id, reconcile: identity, onDelete: cascade, orderBy: [text asc]}
+    computed:
+      memberCount: {count: members}
+      noteCount: {count: notes}

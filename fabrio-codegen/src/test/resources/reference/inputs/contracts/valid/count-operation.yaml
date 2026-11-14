@@ -1,0 +1,23 @@
+# capabilities: domain.entity, filter: rsql, pagination: cursor, query.count.operation, query.filter.rsql, query.pagination.cursor, query.sort.colon, rest.client [client], rest.model, rest.server [server], sort: colon
+# A list counted by another operation that takes the list's filter unchanged (Q5.2).
+rialto: "1.0.0"
+info: {name: count-operation, version: 1.0.0}
+sources:
+  api: {kind: openapi, path: ../support/count.json, version: 1.0.0, status: current}
+types:
+  Thing: {kind: entity, identity: [id], properties: {id: {type: uuid}, colour: {type: string}}}
+operations:
+  listThings:
+    rest: api#/paths/~1things/get
+    output: Thing
+    list:
+      fields: {id: {sort: true}, colour: {filter: [eq]}}
+      filter: {encoding: rsql}
+      sort: {encoding: colon, tiebreaker: id}
+      pagination: {strategy: cursor, limit: {default: 20, max: 100}}
+      count: {strategy: operation, operation: countThings, response: /count}
+      wire:
+        parameters: {filter: filter, limit: limit, cursor: cursor}
+        response: {items: /items, next: /next}
+  countThings:
+    rest: api#/paths/~1things~1count/get

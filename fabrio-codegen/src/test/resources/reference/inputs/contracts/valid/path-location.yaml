@@ -1,0 +1,30 @@
+# capabilities: domain.value-object, errors.client [client], errors.server [server], identify: member, location: path, mapping.direction.reverse, rest.client [client], rest.model, rest.server [server]
+# With locationFormat path, a single name is a parameter or header when the operation has one by that name,
+# and a top-level body property otherwise; here they never share a name (E1.5).
+rialto: "1.0.0"
+info: {name: path-location, version: 1.0.0}
+sources:
+  api: {kind: openapi, path: ../support/labels.json, version: 1.0.0, status: current}
+types:
+  Label:
+    kind: value
+    properties:
+      note: {type: string}
+      carrier: {type: string}
+errors:
+  format: problem-details
+  validationStatus: 400
+  identify: member
+  wire:
+    code: /code
+    fieldErrors: /errors
+    field: {location: /location, code: /code, detail: /detail}
+    locationFormat: path
+mappings:
+  - {source: api#/components/schemas/Label, target: Label, direction: both}
+operations:
+  createDraft:
+    rest: api#/paths/~1drafts/post
+    input: Label
+    output: Label
+    handler: authored

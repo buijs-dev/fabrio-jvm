@@ -1,0 +1,5 @@
+{
+  "asyncapi": "3.0.0",
+  "info": {"title": "Support events", "version": "1.0.0"},
+  "channels": {"things": {"address": "things"}}
+}

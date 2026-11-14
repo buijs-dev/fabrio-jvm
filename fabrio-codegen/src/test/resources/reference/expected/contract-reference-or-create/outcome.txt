@@ -1,0 +1,2 @@
+failed
+RIALTO-G002 Generator fabrio-quarkus does not support the capability 'lifecycle.reference-or-create'
