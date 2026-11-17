@@ -28,12 +28,12 @@ import kotlin.io.path.readText
 import kotlin.io.path.reader
 
 /**
- * The reference output of the safety net, under `src/test/resources/reference`: what the legacy
- * generator wrote for each case (see docs/architecture.md).
+ * The reference output of the safety net, under `src/test/resources/reference`: per case, the
+ * target files that the pipeline must reproduce byte for byte (see docs/architecture.md).
  *
- * - `cases/<case>.properties`: the `contract` of the case, and the options the legacy generator had;
+ * - `cases/<case>.properties`: the `contract` of the case, and its generator options;
  * - `inputs/`: the contracts and every document they refer to;
- * - `expected/<case>/output/`: the files the legacy generator wrote, and `outcome.txt`: whether it succeeded;
+ * - `expected/<case>/output/`: the target files, and `outcome.txt`: whether the case has output;
  * - `coverage.properties`: per case, how many reference files the pipeline must produce at least.
  */
 object Reference {
@@ -46,7 +46,7 @@ object Reference {
                 ) { "No reference on the classpath" }.toURI(),
             ).parent
 
-    /** One case: a contract and the files the legacy generator wrote for it. */
+    /** One case: a contract and its target files. */
     class Case(
         val name: String,
         val contract: Path,

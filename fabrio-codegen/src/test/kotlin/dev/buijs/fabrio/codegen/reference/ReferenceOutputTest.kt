@@ -75,7 +75,7 @@ class ReferenceOutputTest {
                 Reference.cases.forEach { case ->
                     val count = covered[case.name]?.toString() ?: "?"
                     appendLine(
-                        "  ${case.name}: $count of ${case.expected.size} (legacy: ${case.outcome})",
+                        "  ${case.name}: $count of ${case.expected.size} (reference: ${case.outcome})",
                     )
                 }
             }

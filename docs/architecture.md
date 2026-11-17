@@ -42,28 +42,28 @@ emitters yet.
 
 ## The safety net
 
-Until every profile is moved, the output must stay byte for byte that of the generator it
-replaces (the legacy generator, which scanned the authored Kotlin and merged it with the contract).
-Its output is committed under `fabrio-codegen/src/test/resources/reference`:
+The reference outputs under `fabrio-codegen/src/test/resources/reference` are the target output:
+the files that the passes and emitters must reproduce byte for byte, per case.
 
 | Path | Holds |
 |---|---|
-| `cases/<case>.properties` | the `contract` of the case, and the options of the legacy generator |
+| `cases/<case>.properties` | the `contract` of the case, and the generator options of the case |
 | `inputs/` | the 3 example applications and the 32 valid test contracts of rialto-spec, with their sources |
-| `expected/<case>/output/` | the files the legacy generator wrote (822 in all) |
-| `expected/<case>/outcome.txt` | whether it succeeded, or the errors it reported |
+| `expected/<case>/output/` | the target files of the case (822 in all) |
+| `expected/<case>/outcome.txt` | whether the case has output, or the errors that the contract gives |
 | `coverage.properties` | per case, how many reference files the pipeline must produce at least |
 
 `ReferenceOutputTest` runs `Pipeline.fabrio` on every case. A file the pipeline produces must be in
 the reference and equal to it byte for byte; a file the reference does not have fails too. The
 test reports the coverage, the reference files produced so far, in
-`build/reports/reference/coverage.txt`; slice 0 produces 0 of 822. The numbers in
-`coverage.properties` only go up.
+`build/reports/reference/coverage.txt`; slice 0 produces 0 of 822. `coverage.properties` is the
+ratchet: per case, how many files the pipeline already reproduces. Later slices raise it, one
+profile at a time; it never goes down.
 
-The reference was made with the legacy generator from `fabrio-codegen` 1.0.0-SNAPSHOT before this
-rewrite. To make it again, publish that generator and its `rialto-core` to Maven Local from their
-source trees, and run `./gradlew -p tools/reference run`. The inputs are 0.7 MB and the
-expected files 1.8 MB, about 340 KB compressed.
+`tools/reference`, a build of its own, generates the reference outputs from the cases and their
+inputs. It runs the reference generator `dev.buijs.fabrio:fabrio-codegen:1.0.0-SNAPSHOT` through
+Rialto's `Generation.run`, resolved from Maven Local: `./gradlew -p tools/reference run`. The
+inputs are 0.7 MB and the expected files 1.8 MB, about 340 KB compressed.
 
 ## How a slice adds a pass
 

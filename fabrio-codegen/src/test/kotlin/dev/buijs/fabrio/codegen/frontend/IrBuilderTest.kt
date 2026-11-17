@@ -189,7 +189,7 @@ class IrBuilderTest {
                     rest: api#/paths/~1items~1{id}/get
                     output: Item
                   listItems:
-                    rest: {api: api#/paths/~1items/get, legacy: legacy#/paths/~1items/get}
+                    rest: {api: api#/paths/~1items/get, v1: v1#/paths/~1items/get}
                     output: list<Item>
                   createItem:
                     rest: api#/paths/~1items/post
@@ -222,7 +222,7 @@ class IrBuilderTest {
         assertThat(get.input).isNull()
 
         val list = ir.operation("listItems")
-        assertThat(list.rest.map { it.source }).containsExactly("api", "legacy")
+        assertThat(list.rest.map { it.source }).containsExactly("api", "v1")
         assertThat(list.output?.name).isEqualTo("Item")
         assertThat(list.outputList).isTrue()
 
@@ -472,7 +472,7 @@ class IrBuilderTest {
         sources: String = "",
     ): ContractIr {
         directory.resolve("api.json").writeText(OPENAPI)
-        directory.resolve("legacy.json").writeText(OPENAPI)
+        directory.resolve("v1.json").writeText(OPENAPI)
         directory.resolve("events.json").writeText(ASYNCAPI)
         directory.resolve("db.sql").writeText(SQL)
 
@@ -500,7 +500,7 @@ class IrBuilderTest {
             info: {name: test, version: 1.0.0}
             sources:
               api: {kind: openapi, path: api.json}
-              legacy: {kind: openapi, path: legacy.json}
+              v1: {kind: openapi, path: v1.json}
               events: {kind: asyncapi, path: events.json}
               db: {kind: sql, path: db.sql}
             """.trimIndent() + "\n"

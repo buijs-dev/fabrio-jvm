@@ -18,12 +18,12 @@ import java.io.File
 import java.util.Properties
 
 /**
- * Regenerates the reference output (arguments: the reference directory and a work directory): per case in `<reference>/cases/<case>.properties`, the files the
- * legacy generator writes into `<reference>/expected/<case>/output`, and its outcome in
+ * Generates the reference output (arguments: the reference directory and a work directory): per case in `<reference>/cases/<case>.properties`, the files the
+ * reference generator writes into `<reference>/expected/<case>/output`, and its outcome in
  * `<reference>/expected/<case>/outcome.txt`.
  *
  * A case names its `contract` and the generator options (`option.<name>`), with paths relative to
- * the reference directory. `option.sources`, the authored Kotlin roots the legacy generator scans,
+ * the reference directory. `option.sources`, the authored Kotlin roots the reference generator reads,
  * is a list separated by `,`. The `.rialto/` manifest that Rialto tooling writes next to the files
  * is left out: it is not Fabrio's output.
  */

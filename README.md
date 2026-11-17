@@ -13,11 +13,11 @@ The documentation is the developer portal, [fabrio.buijs.dev](https://fabrio.bui
 
 ## Status
 
-Fabrio JVM is rebuilt in slices on the way to 1.0.0. The generator reads the contract into an IR,
+Fabrio JVM is built in slices on the way to 1.0.0. The generator reads the contract into an IR,
 a pass per profile adds its meaning, and emitters write the files; see
-[docs/architecture.md](docs/architecture.md). Every slice keeps the output byte for byte equal to
-that of the generator it replaces, for the example applications and the test contracts of
-rialto-spec.
+[docs/architecture.md](docs/architecture.md). Every file the pipeline produces is byte for byte
+equal to the reference output, for the example applications and the test contracts of rialto-spec;
+each slice reproduces more of it, one profile at a time.
 
 | # | Slice | fabrio-jvm | Status |
 |---|---|---|---|
