@@ -21,7 +21,7 @@ out. Snapshots (`-SNAPSHOT`) are on Repsy:
 dependencyResolutionManagement {
     repositories {
         mavenCentral()
-        maven("https://repo.repsy.io/mvn/buijs-dev/maven") // snapshots only
+        maven("https://repo.repsy.io/buijs-dev/maven2") // snapshots only
     }
 }
 ```

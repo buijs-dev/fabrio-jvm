@@ -9,15 +9,14 @@ pluginManagement {
     }
 }
 
-// Every module resolves from here; snapshots of dev.buijs artifacts (kotlin-style, Rialto) come
-// from Repsy or Maven Local.
+// Every module resolves from here; snapshots of dev.buijs artifacts (kotlin-style, Rialto) and
+// the dev.buijs build tooling come from Repsy or Maven Local.
 dependencyResolutionManagement {
     repositories {
         mavenCentral()
         mavenLocal()
-        maven("https://repo.repsy.io/mvn/buijs-dev/maven") {
+        maven("https://repo.repsy.io/buijs-dev/maven2") {
             mavenContent {
-                snapshotsOnly()
                 includeGroupByRegex("dev\\.buijs.*")
             }
         }

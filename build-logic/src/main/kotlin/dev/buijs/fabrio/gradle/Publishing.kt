@@ -22,7 +22,7 @@ import org.gradle.api.publish.PublishingExtension
  * module only sets its own `description`, and its artifact id is its project name.
  *
  * Releases go to Maven Central (`publishToMavenCentral`), snapshots to Repsy
- * (`publishAllPublicationsToRepsyRepository`), with the credentials the buijs-dev/ci-templates
+ * (`publishAllPublicationsToRepsyRepository`, https://repo.repsy.io/buijs-dev/maven2), with the credentials the buijs-dev/ci-templates
  * publish workflows set. Publications are signed only when a signing key is configured
  * (`signingInMemoryKey` or `signing.keyId`), so publishing to Maven Local needs none.
  */
@@ -71,7 +71,7 @@ fun Project.configurePublishing() {
         repositories {
             maven {
                 name = "Repsy"
-                setUrl("https://repo.repsy.io/mvn/buijs-dev/maven")
+                setUrl("https://repo.repsy.io/buijs-dev/maven2")
                 credentials {
                     username = providers.environmentVariable("REPSY_USERNAME").orNull
                     password = providers.environmentVariable("REPSY_PASSWORD").orNull

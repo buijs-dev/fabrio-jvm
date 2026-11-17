@@ -43,7 +43,7 @@ modules) and the Gradle plugin `dev.buijs.fabrio` come with the slice that needs
 | `fabrio-codegen` | The generator: `ContractIr` from a Rialto contract, the passes per profile and the emitters |
 | `fabrio-bom` | Module versions as a platform |
 
-Snapshots are on [Repsy](https://repsy.io/buijs-dev/maven).
+Snapshots are on Repsy: `https://repo.repsy.io/buijs-dev/maven2`.
 
 ## Building
 
@@ -54,7 +54,7 @@ Snapshots are on [Repsy](https://repsy.io/buijs-dev/maven).
 The build logic is in [`build-logic/`](build-logic) (the `fabrio.*` convention plugins) and the
 versions of third-party libraries in [`gradle/libs.versions.toml`](gradle/libs.versions.toml).
 `fabrio-codegen` depends on `rialto-core` (the contract model) and the build on the style plugin
-`dev.buijs.kotlin-style`; both resolve from Maven Local or the snapshots on Repsy.
+`dev.buijs.kotlin-style`; both resolve from Maven Local or Repsy.
 
 The test `ReferenceOutputTest` prints how much of the reference output the pipeline produces, and
 writes it to `fabrio-codegen/build/reports/reference/coverage.txt`.
