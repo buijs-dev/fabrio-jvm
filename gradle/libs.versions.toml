@@ -11,7 +11,7 @@ kotlin = "2.4.21"
 kover = "0.9.11"
 buijs-style = "1.0.0-SNAPSHOT"
 maven-publish = "0.37.0"
-rialto = "0.1.0-SNAPSHOT"
+rialto = "1.0.0-SNAPSHOT"
 
 # Libraries
 assertj = "3.27.7"
