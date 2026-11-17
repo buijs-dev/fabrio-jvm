@@ -4,11 +4,7 @@ dependencyResolutionManagement {
         gradlePluginPortal()
         mavenCentral()
         mavenLocal()
-        maven("https://repo.repsy.io/mvn/buijs-dev/maven") {
-            mavenContent {
-                includeGroupByRegex("dev\\.buijs.*")
-            }
-        }
+        maven("https://repo.repsy.io/mvn/buijs-dev/maven")
     }
 
     versionCatalogs { create("libs") { from(files("../gradle/libs.versions.toml")) } }
