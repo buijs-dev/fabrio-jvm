@@ -17,13 +17,15 @@
   - `Pass`, `Contributions` (`ContributionKey`, one writer per key), `Emitter`, `GeneratedFile`
     and `Pipeline`: frontend, passes, emitters and files, deterministic. `Pipeline.fabrio` has no
     passes and no emitters yet.
-- The safety net: the reference output of the current generator for the 3 example applications
-  and the 32 valid test contracts of rialto-spec (822 files, with their inputs), under
+- The safety net: the reference output for the 3 example applications and the 32 valid test
+  contracts of rialto-spec (822 files, with their inputs), under
   `fabrio-codegen/src/test/resources/reference`. `ReferenceOutputTest` compares every file the
   pipeline produces with it byte for byte and reports the coverage: 0 of 822 in slice 0.
-  `tools/reference` regenerates it with the legacy generator.
+  `tools/reference` regenerates it.
 - `docs/architecture.md`: the IR, passes, contributions, emitters and the safety net, and how a
   slice adds a pass.
 - The portal skeleton: the landing page, getting started as a stub, and the releases.
 - CI: build, tests and the style check on pull requests and on pushes to `develop` and `main`,
   the portal build, snapshots from `develop`, and the portal on GitHub Pages from `main`.
+- Releases: a `v*` tag on `develop` prepares the release through pull requests to `develop` and
+  `main`; merging into `main` publishes it to Maven Central with a GitHub Release.
