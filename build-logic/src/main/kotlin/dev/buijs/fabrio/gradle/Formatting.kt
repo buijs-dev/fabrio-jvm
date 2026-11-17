@@ -13,7 +13,7 @@
 
 package dev.buijs.fabrio.gradle
 
-import dev.buijs.style.gradle.KotlinStyleExtension
+import dev.buijs.kotlinstyle.gradle.KotlinStyleExtension
 import org.gradle.api.Project
 
 /** The license header of `.kt` sources (Apache-2.0, Buijs Software). */
@@ -32,7 +32,7 @@ const val LICENSE_HEADER: String = """
  */
 """
 
-/** The Kotlin style plugin (dev.buijs.style) with the license header of [LICENSE_HEADER]. */
+/** The Kotlin style plugin (dev.buijs.kotlin-style) with the license header of [LICENSE_HEADER]. */
 fun Project.configureFormatting() {
     extensions.configure(KotlinStyleExtension::class.java) {
         licenseHeader.set(LICENSE_HEADER.trim())

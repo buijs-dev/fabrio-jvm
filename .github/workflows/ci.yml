@@ -2,7 +2,7 @@ name: CI
 
 # Builds and tests every module with the style check, and builds the portal. The safety net
 # (ReferenceOutputTest) runs with the tests; its reference output is committed, so CI needs no
-# other repository. rialto-core and the style plugin (dev.buijs.style) come from the snapshots on Repsy.
+# other repository. rialto-core and the style plugin (dev.buijs.kotlin-style) come from the snapshots on Repsy.
 on:
   push:
     branches: [ main, develop ]
