@@ -43,7 +43,7 @@ modules) and the Gradle plugin `dev.buijs.fabrio` come with the slice that needs
 | `fabrio-codegen` | The generator: `ContractIr` from a Rialto contract, the passes per profile and the emitters |
 | `fabrio-bom` | Module versions as a platform |
 
-Snapshots are on Repsy: `https://repo.repsy.io/buijs-dev/maven2`.
+Snapshots are on Repsy: `https://repo.repsy.io/mvn/buijs-dev/maven`.
 
 ## Building
 
