@@ -1,0 +1,94 @@
+# capabilities: auth.server [server], domain.entity, domain.shape, domain.value-object, errors.client [client], errors.server [server], events.mode.structured [server], events.publish [server], filter: rsql, identify: member, lifecycle.create, lifecycle.delete, location: pointer, mapping.direction.reverse, mapping.enum, mapping.wrapper, mode: structured, pagination: cursor, persistence.delete.physical, persistence.insert, persistence.optimistic-concurrency, persistence.read, query.filter.rsql, query.pagination.cursor, query.sort.colon, rest.client [client], rest.model, rest.server [server], sort: colon
+# Backend: a stored entity that is read, inserted and deleted with optimistic concurrency, a cursor list with RSQL and
+# colon sort, operations that need a signed-in user, and an event published in structured mode.
+rialto: "1.0.0"
+info: {name: backend, version: 1.0.0}
+sources:
+  api: {kind: openapi, path: ../support/backend.json, version: 1.0.0, status: current}
+  db: {kind: sql, path: ../support/backend.sql, dialect: postgresql}
+  events: {kind: asyncapi, path: ../support/backend-events.json, version: 1.0.0, status: current}
+auth:
+  providers: {main: {issuer: https://auth.example.invalid}}
+types:
+  OrderId: {kind: value, wraps: uuid}
+  Status: {kind: enum, members: [open, closed]}
+  Order:
+    kind: entity
+    identity: [id]
+    properties:
+      id: {type: OrderId}
+      status: {type: Status, default: {value: open, phase: business}}
+      total: {type: int32, minimum: 0}
+      note: {type: string, nullable: true}
+  OrderPlaced:
+    kind: value
+    properties:
+      orderId: {type: uuid}
+shapes:
+  PlaceOrder:
+    source: Order
+    command: create
+    properties:
+      id: {role: caller}
+      total: {role: caller}
+      note: {role: caller}
+errors:
+  format: problem-details
+  validationStatus: 400
+  identify: member
+  wire:
+    code: /code
+    fieldErrors: /errors
+    field: {location: /pointer, code: /code, detail: /detail}
+    locationFormat: pointer
+mappings:
+  - {source: api#/components/schemas/Order, target: Order, direction: both}
+storage:
+  Order:
+    table: db#orders
+    storageKey: storage_id
+    version: version
+    columns: {id: public_id, status: status, total: total, note: note}
+    delete: physical
+events:
+  OrderPlaced:
+    type: com.example.order.placed.v1
+    source: /orders
+    subject: orderId
+    data: OrderPlaced
+    channel: events#/channels/orders
+    mode: structured
+operations:
+  listOrders:
+    rest: api#/paths/~1orders/get
+    output: Order
+    principals: [user]
+    list:
+      fields:
+        id: {sort: true}
+        status: {filter: [eq, in], sort: true}
+        total: {filter: [gt, lt], sort: true}
+      filter: {encoding: rsql, maxDepth: 3}
+      sort: {encoding: colon, tiebreaker: id}
+      pagination: {strategy: cursor, limit: {default: 20, max: 100}}
+      wire:
+        parameters: {filter: filter, sort: sort, limit: limit, cursor: cursor}
+        response: {items: /items, next: /nextCursor}
+  placeOrder:
+    rest: api#/paths/~1orders/post
+    lifecycle: create
+    input: PlaceOrder
+    output: Order
+    principals: [user]
+    emits: [OrderPlaced]
+  getOrder:
+    rest: api#/paths/~1orders~1{orderId}/get
+    parameters: {orderId: id}
+    output: Order
+    principals: [user]
+  deleteOrder:
+    rest: api#/paths/~1orders~1{orderId}/delete
+    parameters: {orderId: id}
+    lifecycle: delete
+    subject: Order
+    principals: [user]

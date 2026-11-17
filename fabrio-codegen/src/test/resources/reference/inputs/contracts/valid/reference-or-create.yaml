@@ -1,0 +1,48 @@
+# capabilities: domain.entity, domain.relationship, domain.shape, domain.value-object, domain.value-provider, lifecycle.create, lifecycle.reference-or-create, mapping.nested, rest.client [client], rest.model, rest.server [server]
+# A match links an existing playset or creates a new one, never both; a score names its scorer by identity (L1.7, L1.8).
+rialto: "1.0.0"
+info: {name: reference-or-create, version: 1.0.0}
+sources:
+  api: {kind: openapi, path: ../support/editors.json, version: 1.0.0, status: current}
+  db: {kind: sql, path: ../support/editors-migrations/*.sql, dialect: postgresql}
+types:
+  Playset: {kind: entity, identity: [id], properties: {id: {type: uuid}, name: {type: string}}}
+  Player: {kind: entity, identity: [id], properties: {id: {type: uuid}}}
+  Score:
+    kind: value
+    properties:
+      points: {type: int32}
+      scorer: {type: Player, relation: reference}
+  Match:
+    kind: entity
+    identity: [id]
+    properties:
+      id: {type: uuid}
+      playset: {type: Playset, nullable: true, relation: reference}
+      score: {type: Score}
+shapes:
+  CreatePlayset:
+    source: Playset
+    command: create
+    properties:
+      id: {role: application, provider: newPlaysetId}
+      name: {role: caller}
+  CreateMatch:
+    source: Match
+    command: create
+    properties:
+      id: {role: application, provider: newMatchId}
+      playset: {role: caller, as: [identity, command], shape: CreatePlayset}
+      score: {role: caller}
+mappings:
+- source: api#/components/schemas/CreateMatch
+  target: CreateMatch
+  direction: toTarget
+  properties:
+    playset: {from: {identity: playsetId, command: playset}}
+operations:
+  createMatch:
+    rest: api#/paths/~1matches/post
+    lifecycle: create
+    input: CreateMatch
+    output: Match

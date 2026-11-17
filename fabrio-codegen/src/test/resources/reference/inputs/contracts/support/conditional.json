@@ -1,0 +1,162 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "conditional",
+    "version": "1.0.0"
+  },
+  "security": [],
+  "paths": {
+    "/things/{thingId}": {
+      "get": {
+        "operationId": "getThing",
+        "parameters": [
+          {
+            "name": "thingId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "If-None-Match",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The thing",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Thing"
+                }
+              }
+            }
+          },
+          "304": {
+            "description": "Unchanged",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/things/{thingId}/touch": {
+      "post": {
+        "operationId": "touchThing",
+        "parameters": [
+          {
+            "name": "thingId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "If-None-Match",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Touched",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Thing"
+                }
+              }
+            }
+          },
+          "304": {
+            "description": "Unchanged",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/things/{thingId}/plain": {
+      "get": {
+        "operationId": "getPlainThing",
+        "parameters": [
+          {
+            "name": "thingId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The thing",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Thing"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Thing": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "colour": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "colour"
+        ]
+      }
+    }
+  }
+}

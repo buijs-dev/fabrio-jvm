@@ -1,0 +1,16 @@
+# capabilities: auth.server [server], auth.server.api-key [server], rest.client [client], rest.model, rest.server [server]
+# A service sends an API key in a header, together with an OAuth scope (S6, R3.1).
+rialto: "1.0.0"
+info: {name: api-key, version: 1.0.0}
+sources:
+  api: {kind: openapi, path: ../support/api-key.json, version: 1.0.0, status: current}
+auth:
+  providers: {main: {issuer: https://auth.example.invalid}}
+  scopes:
+    "stock:write": {scheme: api#/components/securitySchemes/oauth}
+    "stock:admin": {scheme: api#/components/securitySchemes/oauth}
+  apiKeys:
+    warehouse: {scheme: api#/components/securitySchemes/warehouseKey, lookup: WarehouseKeys}
+operations:
+  syncStock:
+    rest: api#/paths/~1stock~1sync/post

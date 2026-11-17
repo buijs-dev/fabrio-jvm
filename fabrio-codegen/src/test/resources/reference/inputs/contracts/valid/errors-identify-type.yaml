@@ -1,0 +1,30 @@
+# capabilities: errors.client [client], errors.server [server], identify: type, location: pointer
+rialto: '1.0.0'
+info:
+  name: error-types
+  version: 1.0.0
+errors:
+  format: problem-details
+  validationStatus: 400
+  identify: type
+  codeTypes: https://errors.example.invalid/codes/{code}
+  types:
+    validation: https://errors.example.invalid/categories/validation
+  codes:
+    invalidLabel:
+      category: validation
+      status: 422
+      type: https://errors.example.invalid/invalid-label
+      description: The carrier label is invalid.
+  wire:
+    fieldErrors: /errors
+    field:
+      location: /pointer
+      code: /code
+      detail: /detail
+    locationFormat: pointer
+operations:
+  validateLabel:
+    handler: authored
+    errors:
+    - invalidLabel

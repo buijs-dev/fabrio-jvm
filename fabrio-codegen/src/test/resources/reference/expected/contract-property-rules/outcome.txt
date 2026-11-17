@@ -1,0 +1,2 @@
+failed
+RIALTO-G006 types.Game.properties.scoreType: Fabrio checks rules between properties (D3.6, D3.7) on the writes it generates; declare storage.Game

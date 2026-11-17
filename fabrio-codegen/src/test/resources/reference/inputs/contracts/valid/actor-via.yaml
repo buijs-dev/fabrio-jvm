@@ -1,0 +1,21 @@
+# capabilities: auth.server [server], auth.server.actor-via [server], domain.entity, domain.shape, domain.value-object, domain.value-provider, lifecycle.create
+# A claim request records the caller's own player, which an authored seam derives from the actor (S4.6).
+rialto: "1.0.0"
+info: {name: actor-via, version: 1.0.0}
+types:
+  PlayerId: {kind: value, wraps: uuid}
+  ClaimRequest:
+    kind: entity
+    identity: [id]
+    properties:
+      id: {type: uuid}
+      player: {type: PlayerId}
+      message: {type: string, nullable: true}
+shapes:
+  CreateClaimRequest:
+    source: ClaimRequest
+    command: create
+    properties:
+      id: {role: application, provider: newClaimRequestId}
+      player: {role: actor, via: canonicalPlayer}
+      message: {role: caller}

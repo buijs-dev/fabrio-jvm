@@ -1,0 +1,41 @@
+# capabilities: domain.entity, domain.shape, persistence.blob, persistence.read, rest.binary, rest.client [client], rest.model, rest.server [server]
+# A file uploaded as a multipart part and downloaded as a whole body, kept in a blob store with its metadata in the
+# row (K2.11, R7, P7).
+rialto: "1.0.0"
+info: {name: binary, version: 1.0.0}
+sources:
+  api: {kind: openapi, path: ../support/binary.json, version: 1.0.0, status: current}
+  db: {kind: sql, path: ../support/migrations/*.sql, dialect: postgresql}
+types:
+  Proof:
+    kind: entity
+    identity: [id]
+    properties:
+      id: {type: uuid}
+      file: {type: binary, maxSize: 10485760, mediaTypes: [image/jpeg, application/pdf]}
+shapes:
+  UploadProof:
+    source: Proof
+    properties:
+      id: {role: caller}
+      file: {role: caller}
+  ProofFile:
+    source: Proof
+    properties:
+      file: {role: derived}
+storage:
+  Proof:
+    table: db#proof
+    storageKey: id
+    columns: {id: public_id}
+    blobs:
+      file: {store: proofs, key: file_key, mediaType: file_media_type, size: file_size, sha256: file_sha256, check: authored}
+operations:
+  uploadProof:
+    rest: api#/paths/~1proofs~1{proofId}/put
+    parameters: {proofId: id}
+    input: UploadProof
+  getProof:
+    rest: api#/paths/~1proofs~1{proofId}/get
+    parameters: {proofId: id}
+    output: ProofFile

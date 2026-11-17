@@ -1,0 +1,88 @@
+# capabilities: auth.server [server], auth.view [view], domain.entity, domain.shape, domain.shape.partial, domain.value-object, domain.value-provider, events.mode.structured [server], events.publish [server], lifecycle.create, lifecycle.delete, lifecycle.transition, lifecycle.transition.create, lifecycle.transition.delete, lifecycle.transition.select, lifecycle.transition.sets, lifecycle.update.merge-patch, mode: structured, presentation.action [view], presentation.action.values [view], presentation.navigation [view], presentation.read-view [view], rest.client [client], rest.model, rest.server [server], update: merge-patch
+# An order is approved or rejected by the decision in the body and records when and by whom it was approved; an
+# import starts approved, only a draft can be deleted, and only an approval emits OrderApproved. The view offers the
+# decision as two actions (L5.6–L5.10, U3.9).
+rialto: "1.0.0"
+info: {name: transition-workflow, version: 1.0.0}
+sources:
+  api: {kind: openapi, path: ../support/transitions.json, version: 1.0.0, status: current}
+  events: {kind: asyncapi, path: ../support/events.json, version: 1.0.0, status: current}
+auth:
+  providers: {main: {issuer: https://auth.example.invalid}}
+types:
+  OrderState: {kind: enum, members: [draft, approved, rejected]}
+  Order:
+    kind: entity
+    identity: [id]
+    transitions:
+      property: state
+      rules:
+        approve: {from: [draft], to: approved, sets: {approvedAt: now, approvedBy: actor}, emits: [OrderApproved]}
+        reject: {from: [draft], to: rejected}
+    properties:
+      id: {type: uuid}
+      title: {type: string}
+      state: {type: OrderState, default: {value: draft, phase: business}}
+      approvedAt: {type: instant, nullable: true}
+      approvedBy: {type: string, nullable: true}
+      reason: {type: string, nullable: true}
+  OrderApproved: {kind: value, properties: {orderId: {type: uuid}}}
+shapes:
+  CreateOrder:
+    source: Order
+    command: create
+    properties:
+      id: {role: application, provider: newOrderId}
+      title: {role: caller}
+  DecideOrder:
+    source: Order
+    command: update
+    strategy: merge-patch
+    properties:
+      reason: {role: caller}
+operations:
+  createOrder:
+    rest: api#/paths/~1orders/post
+    lifecycle: create
+    input: CreateOrder
+    output: Order
+  importOrder:
+    rest: api#/paths/~1orders~1imports/post
+    lifecycle: create
+    input: CreateOrder
+    output: Order
+    transition: Order.approve
+    policy: canImportApproved
+  getOrder:
+    rest: api#/paths/~1orders~1{orderId}/get
+    parameters: {orderId: id}
+    output: Order
+  decideOrder:
+    rest: api#/paths/~1orders~1{orderId}~1decision/post
+    parameters: {orderId: id}
+    input: DecideOrder
+    output: Order
+    transition:
+      select: /decision
+      rules: {approve: Order.approve, reject: Order.reject}
+  deleteOrder:
+    rest: api#/paths/~1orders~1{orderId}/delete
+    parameters: {orderId: id}
+    lifecycle: delete
+    subject: Order
+    from: [draft]
+events:
+  OrderApproved:
+    type: com.example.order.approved.v1
+    source: /orders
+    subject: orderId
+    data: OrderApproved
+    channel: events#/channels/things
+    mode: structured
+views:
+  OrderDetail:
+    route: /orders/{id}
+    load: getOrder
+    actions:
+      approve: {operation: decideOrder, confirm: true, values: {/decision: approve}}
+      reject: {operation: decideOrder, confirm: true, values: {/decision: reject}}

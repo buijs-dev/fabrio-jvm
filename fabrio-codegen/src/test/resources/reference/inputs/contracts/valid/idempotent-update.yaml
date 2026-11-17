@@ -1,0 +1,29 @@
+# capabilities: domain.entity, domain.shape, domain.shape.partial, lifecycle.idempotency, lifecycle.update.merge-patch, rest.client [client], rest.model, rest.server [server], update: merge-patch
+# An update and an action that a client can repeat safely with an Idempotency-Key (L3.2).
+rialto: "1.0.0"
+info: {name: idempotent-update, version: 1.0.0}
+sources:
+  api: {kind: openapi, path: ../support/idempotency.json, version: 1.0.0, status: current}
+types:
+  Thing: {kind: entity, identity: [id], properties: {id: {type: uuid}, colour: {type: string}}}
+shapes:
+  PatchThing:
+    source: Thing
+    command: update
+    strategy: merge-patch
+    properties:
+      colour: {role: caller}
+operations:
+  patchThing:
+    rest: api#/paths/~1things~1{thingId}/patch
+    parameters: {thingId: id}
+    lifecycle: update
+    input: PatchThing
+    output: Thing
+    idempotency: {header: Idempotency-Key}
+  polishThing:
+    rest: api#/paths/~1things~1{thingId}~1polish/post
+    parameters: {thingId: id}
+    output: Thing
+    handler: authored
+    idempotency: {header: Idempotency-Key}

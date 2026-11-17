@@ -1,0 +1,281 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "editors",
+    "version": "1.0.0"
+  },
+  "security": [],
+  "paths": {
+    "/editors": {
+      "get": {
+        "operationId": "listEditors",
+        "parameters": [
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Editor"
+                      }
+                    },
+                    "next": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/editors/{editorId}": {
+      "get": {
+        "operationId": "getEditor",
+        "parameters": [
+          {
+            "name": "editorId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Editor"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "revokeEditor",
+        "parameters": [
+          {
+            "name": "editorId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Revoked"
+          }
+        }
+      }
+    },
+    "/editors/{editorId}/restoration": {
+      "post": {
+        "operationId": "restoreEditor",
+        "parameters": [
+          {
+            "name": "editorId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Editor"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/matches": {
+      "post": {
+        "operationId": "createMatch",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMatch"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Match"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/editors/suggestions": {
+      "get": {
+        "operationId": "suggestEditors",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "At most ten editors, revoked ones too",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "maxItems": 10,
+                  "items": {
+                    "$ref": "#/components/schemas/Editor"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Editor": {
+        "type": "object",
+        "required": [
+          "id",
+          "name"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "revokedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "readOnly": true
+          }
+        }
+      },
+      "CreatePlayset": {
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "Score": {
+        "type": "object",
+        "required": [
+          "points",
+          "scorer"
+        ],
+        "properties": {
+          "points": {
+            "type": "integer"
+          },
+          "scorer": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "CreateMatch": {
+        "type": "object",
+        "required": [
+          "score"
+        ],
+        "properties": {
+          "playsetId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "playset": {
+            "$ref": "#/components/schemas/CreatePlayset"
+          },
+          "score": {
+            "$ref": "#/components/schemas/Score"
+          }
+        }
+      },
+      "Match": {
+        "type": "object",
+        "required": [
+          "id"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      }
+    }
+  }
+}

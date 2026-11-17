@@ -1,0 +1,293 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "links",
+    "version": "1.0.0"
+  },
+  "security": [],
+  "paths": {
+    "/clubs/{clubId}": {
+      "get": {
+        "operationId": "getClub",
+        "parameters": [
+          {
+            "name": "clubId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The club",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Club"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "operationId": "patchClub",
+        "parameters": [
+          {
+            "name": "clubId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/merge-patch+json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "founded": {
+                    "type": "string",
+                    "format": "date"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The club",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Club"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/clubs/by-name/{name}": {
+      "get": {
+        "operationId": "getClubByName",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The club",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Club"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/clubs/{clubId}/members/{personId}": {
+      "put": {
+        "operationId": "addMember",
+        "parameters": [
+          {
+            "name": "clubId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "personId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Done"
+          },
+          "404": {
+            "description": "No club"
+          },
+          "409": {
+            "description": "No such person"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "removeMember",
+        "parameters": [
+          {
+            "name": "clubId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "personId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Done"
+          },
+          "404": {
+            "description": "No club"
+          },
+          "409": {
+            "description": "No such person"
+          }
+        }
+      }
+    },
+    "/clubs/{clubId}/lines/{lineId}/flag": {
+      "post": {
+        "operationId": "flagLine",
+        "parameters": [
+          {
+            "name": "clubId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "lineId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The club",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Club"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/clubs/{clubId}/joins": {
+      "post": {
+        "operationId": "joinClub",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "clubId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Joined",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Membership"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Club": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "founded"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "founded": {
+            "type": "string",
+            "format": "date"
+          }
+        }
+      },
+      "Membership": {
+        "type": "object",
+        "required": [
+          "id"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "bearer": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    }
+  }
+}

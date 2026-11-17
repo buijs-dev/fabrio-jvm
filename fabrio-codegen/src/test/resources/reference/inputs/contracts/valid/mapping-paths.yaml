@@ -1,0 +1,71 @@
+# capabilities: domain.entity, domain.projection, domain.relationship, domain.shape, domain.shape.partial, domain.value-provider, lifecycle.create, lifecycle.update.merge-patch, mapping.direction.reverse, mapping.nested, mapping.nested.path, mapping.partial, mapping.presence, update: merge-patch
+# A flag that tells whether the caller sent the score, also as null, and a flat wire object that becomes an
+# owned child, also of a projection read toward the wire (M3.11, M2.10).
+rialto: "1.0.0"
+info: {name: mapping-paths, version: 1.0.0}
+sources:
+  api: {kind: openapi, path: ../support/mapping-paths.json, version: 1.0.0, status: current}
+types:
+  Loadout:
+    kind: entity
+    identity: [id]
+    properties:
+      id: {type: uuid}
+      attributes: {type: json}
+  Match:
+    kind: entity
+    identity: [id]
+    properties:
+      id: {type: uuid}
+      name: {type: string}
+      score: {type: int32, nullable: true}
+      scoreSet: {type: boolean}
+      loadout: {type: Loadout, nullable: true, relation: owned}
+  MatchView:
+    kind: projection
+    source: Match
+    properties: [id, name, scoreSet, loadout]
+shapes:
+  PatchMatch:
+    source: Match
+    command: update
+    strategy: merge-patch
+    partial: true
+    properties:
+      score: {role: caller}
+      scoreSet: {role: derived}
+  CreateMatch:
+    source: Match
+    command: create
+    properties:
+      id: {role: application, provider: newMatchId}
+      name: {role: caller}
+      scoreSet: {role: derived}
+      loadout: {role: caller, as: command, shape: CreateLoadout}
+  CreateLoadout:
+    source: Loadout
+    command: create
+    properties:
+      id: {role: application, provider: newLoadoutId}
+      attributes: {role: caller}
+mappings:
+- source: api#/components/schemas/PatchMatch
+  target: PatchMatch
+  direction: toTarget
+  properties:
+    scoreSet: {presence: score}
+- source: api#/components/schemas/CreateMatch
+  target: CreateMatch
+  direction: toTarget
+  properties:
+    loadout.attributes: {from: loadoutAttributes}
+- source: api#/components/schemas/Match
+  target: Match
+  direction: both
+  properties:
+    loadout.attributes: {from: loadoutAttributes}
+- source: api#/components/schemas/Match
+  target: MatchView
+  direction: toSource
+  properties:
+    loadout.attributes: {from: loadoutAttributes}

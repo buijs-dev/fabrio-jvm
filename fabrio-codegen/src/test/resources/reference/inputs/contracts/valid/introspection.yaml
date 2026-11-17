@@ -1,0 +1,16 @@
+# capabilities: auth.server [server], auth.server.api-key [server], auth.server.introspection [server], rest.client [client], rest.model, rest.server [server]
+# Opaque access tokens that the server verifies by introspection (S6.4).
+rialto: "1.0.0"
+info: {name: introspection, version: 1.0.0}
+sources:
+  api: {kind: openapi, path: ../support/api-key.json, version: 1.0.0, status: current}
+auth:
+  providers: {main: {issuer: https://auth.example.invalid, verification: introspection}}
+  scopes:
+    "stock:write": {scheme: api#/components/securitySchemes/oauth}
+    "stock:admin": {scheme: api#/components/securitySchemes/oauth}
+  apiKeys:
+    warehouse: {scheme: api#/components/securitySchemes/warehouseKey, lookup: WarehouseKeys}
+operations:
+  syncStock:
+    rest: api#/paths/~1stock~1sync/post

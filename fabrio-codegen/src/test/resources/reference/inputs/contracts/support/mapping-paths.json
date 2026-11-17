@@ -1,0 +1,88 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "mapping-paths",
+    "version": "1.0.0"
+  },
+  "security": [],
+  "paths": {},
+  "components": {
+    "schemas": {
+      "PatchMatch": {
+        "type": "object",
+        "properties": {
+          "score": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32"
+          },
+          "note": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateMatch": {
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "loadoutAttributes": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      },
+      "Match": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "scoreSet"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "score": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32"
+          },
+          "scoreSet": {
+            "type": "boolean"
+          },
+          "loadoutAttributes": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      },
+      "Settings": {
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "mode": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

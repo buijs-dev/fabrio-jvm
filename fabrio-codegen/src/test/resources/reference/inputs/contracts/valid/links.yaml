@@ -1,0 +1,93 @@
+# capabilities: auth.server [server], domain.entity, domain.relationship, domain.shape, domain.shape.partial, domain.value-provider, lifecycle.create, lifecycle.immutable, lifecycle.link, lifecycle.update.merge-patch, persistence.atomic-multi-write, persistence.insert, persistence.managed-link, persistence.optimistic-concurrency, persistence.order.position, persistence.owned-child, persistence.partial-update, persistence.read, persistence.reconcile.identity, persistence.reference, rest.client [client], rest.model, rest.server [server], update: merge-patch
+# A club: a founding date that never changes, members added and removed one at a time, a club found by its
+# unique name, a line addressed through the club, joining without a body, and one membership per club and person
+# (L1.1, L1.6, L6, R1.5, R1.6, P3.6).
+rialto: "1.0.0"
+info: {name: links, version: 1.0.0}
+sources:
+  api: {kind: openapi, path: ../support/links.json, version: 1.0.0, status: current}
+  db: {kind: sql, path: ../support/links-migrations/*.sql, dialect: postgresql}
+types:
+  Person: {kind: entity, identity: [id], properties: {id: {type: uuid}, name: {type: string}}}
+  ClubLine: {kind: entity, identity: [id], properties: {id: {type: uuid}, label: {type: string}}}
+  Club:
+    kind: entity
+    identity: [id]
+    properties:
+      id: {type: uuid}
+      name: {type: string}
+      founded: {type: date, immutable: true}
+      members: {type: list<Person>, relation: reference}
+      lines: {type: list<ClubLine>, relation: owned}
+  Membership:
+    kind: entity
+    identity: [id]
+    properties:
+      id: {type: uuid}
+      club: {type: Club, relation: reference}
+      person: {type: Person, relation: reference}
+storage:
+  Person: {table: db#person, columns: {id: id, name: name}}
+  Membership:
+    table: db#membership
+    columns:
+      id: public_id
+      club: {join: club_id, table: db#club, key: storage_id}
+      person: {join: person_id, table: db#person, key: id}
+    unique: [[club, person]]
+  ClubLine: {table: db#club_line, columns: {id: id, label: label}}
+  Club:
+    table: db#club
+    storageKey: storage_id
+    version: version
+    unique: [[name]]
+    columns: {id: public_id, name: name, founded: founded}
+    links:
+      members: {table: db#club_member, ownerKey: club_id, targetKey: person_id, onDelete: cascade, order: position}
+    children:
+      lines: {parentKey: club_id, reconcile: identity, order: position}
+shapes:
+  PatchClub:
+    source: Club
+    command: update
+    strategy: merge-patch
+    partial: true
+    properties:
+      name: {role: caller}
+  CreateMembership:
+    source: Membership
+    command: create
+    properties:
+      id: {role: application, provider: newMembershipId}
+      club: {role: caller, as: identity}
+      person: {role: actor, as: identity}
+operations:
+  addMember:
+    rest: api#/paths/~1clubs~1{clubId}~1members~1{personId}/put
+    parameters: {clubId: id, personId: members.id}
+    link: {to: Club.members, action: add}
+  removeMember:
+    rest: api#/paths/~1clubs~1{clubId}~1members~1{personId}/delete
+    parameters: {clubId: id, personId: members.id}
+    link: {to: Club.members, action: remove}
+  getClubByName:
+    rest: api#/paths/~1clubs~1by-name~1{name}/get
+    parameters: {name: name}
+    output: Club
+  flagLine:
+    rest: api#/paths/~1clubs~1{clubId}~1lines~1{lineId}~1flag/post
+    parameters: {clubId: id, lineId: lines.id}
+    output: Club
+    handler: authored
+  patchClub:
+    rest: api#/paths/~1clubs~1{clubId}/patch
+    parameters: {clubId: id}
+    lifecycle: update
+    input: PatchClub
+    output: Club
+  joinClub:
+    rest: api#/paths/~1clubs~1{clubId}~1joins/post
+    parameters: {clubId: club.id}
+    lifecycle: create
+    input: CreateMembership
+    output: Membership

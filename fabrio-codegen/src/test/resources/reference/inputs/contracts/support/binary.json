@@ -1,0 +1,116 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "binary",
+    "version": "1.0.0"
+  },
+  "security": [],
+  "paths": {
+    "/proofs/{proofId}": {
+      "put": {
+        "operationId": "uploadProof",
+        "parameters": [
+          {
+            "name": "proofId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "file"
+                ],
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "contentMediaType": "application/octet-stream"
+                  }
+                }
+              },
+              "encoding": {
+                "file": {
+                  "contentType": "image/jpeg, application/pdf"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Stored"
+          },
+          "413": {
+            "description": "Too large"
+          },
+          "415": {
+            "description": "Not an allowed media type"
+          }
+        }
+      },
+      "get": {
+        "operationId": "getProof",
+        "parameters": [
+          {
+            "name": "proofId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The proof",
+            "content": {
+              "image/jpeg": {
+                "schema": {}
+              },
+              "application/pdf": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/proofs/{proofId}/json": {
+      "get": {
+        "operationId": "getProofAsJson",
+        "parameters": [
+          {
+            "name": "proofId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The proof",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

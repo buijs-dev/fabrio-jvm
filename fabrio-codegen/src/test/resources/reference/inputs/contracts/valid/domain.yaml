@@ -1,0 +1,54 @@
+# capabilities: domain.entity, domain.projection, domain.relationship, domain.shape, domain.union, domain.value-object, domain.value-provider, lifecycle.create
+rialto: "1.0.0"
+info: {name: domain, version: 1.0.0}
+types:
+  ThingId: {kind: value, wraps: uuid}
+  Colour: {kind: enum, members: [red, green], extensible: true}
+  Amount:
+    kind: value
+    properties:
+      value: {type: "decimal(10,2)"}
+      currency: {type: string, pattern: "^[A-Z]{3}$"}
+  Thing:
+    kind: entity
+    identity: [id]
+    properties:
+      id: {type: ThingId}
+      colour: {type: Colour}
+      note: {type: string, nullable: true, maxLength: 280}
+      price: {type: Amount, nullable: true}
+      tags: {type: "list<string?>"}
+      counts: {type: "map<Colour, int32>"}
+      parent: {type: Thing, nullable: true, relation: reference}
+      parts: {type: "list<Part>", relation: owned}
+  Part:
+    kind: entity
+    identity: [id]
+    properties:
+      id: {type: uuid}
+      at: {type: zonedDateTime}
+  Card: {kind: value, properties: {method: {type: string}}}
+  Invoice: {kind: value, properties: {method: {type: string}}}
+  FreeOfCharge: {kind: value, description: Nothing to pay.}
+  Payment:
+    kind: union
+    description: How a thing is paid.
+    discriminator: method
+    variants: {card: Card, invoice: Invoice, free: FreeOfCharge}
+  ThingSummary: {kind: projection, source: Thing, properties: [id, colour]}
+  ThingCurrency: {kind: projection, source: Thing, properties: {id: id, currency: price.currency}}
+shapes:
+  CreateThing:
+    source: Thing
+    command: create
+    properties:
+      id: {role: application, provider: newThingId}
+      colour: {role: caller}
+      note: {role: caller, maxLength: 100}
+      parent: {role: caller, as: identity}
+      parts: {role: caller, as: command, shape: CreatePart}
+  CreatePart:
+    source: Part
+    command: create
+    properties:
+      id: {role: application, provider: newPartId}

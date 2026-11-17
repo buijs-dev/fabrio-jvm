@@ -1,0 +1,36 @@
+# capabilities: domain.entity, domain.relationship, persistence.atomic-multi-write, persistence.managed-link, persistence.order.data, persistence.read
+rialto: "1.0.0"
+info: {name: link, version: 1.0.0}
+sources:
+  db: {kind: sql, path: ../support/schema.sql, dialect: postgresql}
+types:
+  Tag:
+    kind: entity
+    identity: [id]
+    properties:
+      id: {type: uuid}
+      name: {type: string}
+  Expansion:
+    kind: entity
+    identity: [id]
+    properties:
+      id: {type: uuid}
+      name: {type: string}
+  Thing:
+    kind: entity
+    identity: [id]
+    properties:
+      id: {type: uuid}
+      name: {type: string}
+      tags: {type: "set<Tag>", relation: reference}
+      expansions: {type: "list<Expansion>", relation: reference}
+storage:
+  Tag: {table: db#tag, storageKey: id, columns: {id: public_id, name: name}}
+  Expansion: {table: db#expansion, storageKey: id, columns: {id: public_id, name: name}}
+  Thing:
+    table: db#thing
+    storageKey: id
+    columns: {id: public_id, name: name}
+    links:
+      tags: {table: db#thing_tag, ownerKey: thing_id, targetKey: tag_id, onDelete: cascade}
+      expansions: {ownerKey: thing_id, orderBy: [name asc]}

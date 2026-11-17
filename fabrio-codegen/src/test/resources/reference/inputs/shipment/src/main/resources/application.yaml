@@ -1,0 +1,114 @@
+quarkus:
+  datasource:
+    db-kind: postgresql
+  flyway:
+    migrate-at-start: true
+
+  http:
+    limits:
+      # Above the 10 MB of a delivery proof: the generated resource rejects a larger part itself,
+      # with a problem, while it reads (rest R7.2).
+      max-body-size: 20M
+
+fabrio:
+  persistence:
+    enabled: true
+  security:
+    propagate-identity: true
+  search:
+    cursor:
+      signing-key: ${CURSOR_SIGNING_KEY:shipment-example-development-signing-key}
+
+mp:
+  jwt:
+    verify:
+      issuer: ${JWT_ISSUER:https://issuer.example/shipment}
+      publickey:
+        location: ${JWT_PUBLIC_KEY_LOCATION:https://issuer.example/shipment/jwks.json}
+
+"%test":
+  quarkus:
+    # The browser app of fabrio-dart/examples/shipment calls the API with a bearer token and reads the
+    # ETag, Location, Retry-After and WWW-Authenticate of a response. Only here and in the tests: a
+    # deployment sets its own origins.
+    http:
+      cors:
+        enabled: true
+        origins: ${CORS_ORIGINS:http://localhost:7357}
+        methods: GET,HEAD,POST,PUT,PATCH,DELETE
+        headers: Authorization,Content-Type,Accept,If-Match,If-None-Match,Idempotency-Key,Last-Event-ID
+        exposed-headers: ETag,Location,Retry-After,WWW-Authenticate
+    log:
+      file:
+        enable: true
+        path: build/quarkus-test.log
+  mp:
+    jwt:
+      verify:
+        issuer: https://issuer.example/shipment
+        publickey:
+          location: publicKey.pem
+  smallrye:
+    jwt:
+      sign:
+        key:
+          location: privateKey.pem
+  fabrio:
+    events:
+      relay-interval: PT0.1S
+  shipment:
+    proofs:
+      kind: filesystem
+      directory: build/test-proofs
+    # The warehouse keys of the tests (S48): a deployment configures its own, from a secret.
+    warehouse:
+      keys:
+        warehouse-amsterdam: test-warehouse-key-amsterdam
+    # The intake seams of the tests (S41): what makes a create fail with an application code.
+    intake:
+      refused-recipients: Refused Recipient
+      unavailable-warehouses: 00000000-0000-7000-8000-000000000503
+      quota-reached-tenants: tenant-quota
+
+# The local environment of dev/compose.yaml, for the Flutter app of fabrio-dart/examples/shipment
+# (README: "Run it locally"). Start the server with -Dquarkus.profile=local.
+"%local":
+  quarkus:
+    # The browser app of fabrio-dart/examples/shipment calls the API with a bearer token and reads the
+    # ETag, Location, Retry-After and WWW-Authenticate of a response. Only here and in the tests: a
+    # deployment sets its own origins.
+    http:
+      cors:
+        enabled: true
+        origins: ${CORS_ORIGINS:http://localhost:7357}
+        methods: GET,HEAD,POST,PUT,PATCH,DELETE
+        headers: Authorization,Content-Type,Accept,If-Match,If-None-Match,Idempotency-Key,Last-Event-ID
+        exposed-headers: ETag,Location,Retry-After,WWW-Authenticate
+    datasource:
+      username: shipment
+      password: shipment
+      jdbc:
+        url: jdbc:postgresql://localhost:55432/shipment
+      reactive:
+        url: postgresql://localhost:55432/shipment
+  kafka:
+    bootstrap:
+      servers: localhost:59092
+  mp:
+    jwt:
+      verify:
+        issuer: http://localhost:8180/realms/shipment
+        publickey:
+          location: http://localhost:8180/realms/shipment/protocol/openid-connect/certs
+  # The blob store proofs in the MinIO of dev/compose.yaml.
+  shipment:
+    warehouse:
+      keys:
+        warehouse-amsterdam: ${WAREHOUSE_KEY:local-warehouse-key}
+    proofs:
+      kind: s3
+      s3:
+        endpoint: http://localhost:59000
+        bucket: proofs
+        access-key: shipment
+        secret-key: shipment-secret

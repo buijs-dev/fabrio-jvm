@@ -1,0 +1,42 @@
+# capabilities: domain.conditional, domain.entity, domain.relative-bound, domain.shape, domain.value-object, domain.value-provider, lifecycle.create
+# A score type required or absent by the win condition, player and date ranges bounded by another property,
+# and lists without duplicates on a type and in a shape (D3.6, D3.7, D3.8).
+rialto: "1.0.0"
+info: {name: property-rules, version: 1.0.0}
+types:
+  WinCondition: {kind: enum, members: [score, elimination, time]}
+  ScoreType: {kind: enum, members: [points, goals]}
+  PlayerCount: {kind: value, wraps: int32}
+  Game:
+    kind: entity
+    identity: [id]
+    properties:
+      id: {type: uuid}
+      winCondition: {type: WinCondition}
+      scoreType:
+        type: ScoreType
+        nullable: true
+        requiredWhen: {winCondition: [score]}
+        absentWhen: {winCondition: [elimination, time]}
+      timeLimit: {type: duration, nullable: true, requiredWhen: {winCondition: [time]}}
+      minPlayers: {type: PlayerCount}
+      maxPlayers: {type: PlayerCount, minimumOf: minPlayers}
+      startsOn: {type: date, nullable: true, maximumOf: endsOn}
+      endsOn: {type: date, nullable: true, minimumOf: startsOn}
+      expansions: {type: list<string>, uniqueItems: true, maxItems: 10}
+      tags: {type: list<string>}
+shapes:
+  CreateGame:
+    source: Game
+    command: create
+    properties:
+      id: {role: application, provider: newGameId}
+      winCondition: {role: caller}
+      scoreType: {role: caller}
+      timeLimit: {role: caller}
+      minPlayers: {role: caller}
+      maxPlayers: {role: caller}
+      startsOn: {role: caller}
+      endsOn: {role: caller}
+      expansions: {role: caller, uniqueItems: true}
+      tags: {role: caller, uniqueItems: true}

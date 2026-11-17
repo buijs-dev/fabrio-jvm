@@ -1,0 +1,3 @@
+failed
+RIALTO-G006 Fabrio needs the errors section: its REST operations answer with problems in one fixed shape, which the contract declares so it can be checked (E1.3). Declare {code: /code, fieldErrors: /errors, field: {location: /pointer, code: /code, detail: /detail}, locationFormat: pointer} (code may be left out with identify: type)
+RIALTO-G006 storage.Proof: Fabrio does not support storageKey on a blob entity

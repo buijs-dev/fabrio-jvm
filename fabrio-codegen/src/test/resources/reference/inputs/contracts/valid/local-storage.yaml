@@ -1,0 +1,37 @@
+# capabilities: domain.entity, domain.relationship, pagination: cursor, persistence.atomic-multi-write, persistence.owned-child, persistence.read, persistence.reconcile.identity, query.pagination.cursor
+rialto: "1.0.0"
+info: {name: local-storage, version: 1.0.0}
+sources:
+  db: {kind: sql, path: ../support/migrations/*.sql, dialect: postgresql}
+types:
+  Loadout:
+    kind: entity
+    identity: [id]
+    properties:
+      id: {type: uuid}
+      label: {type: string}
+  Participant:
+    kind: entity
+    identity: [id]
+    properties:
+      id: {type: uuid}
+      rank: {type: int32}
+      raw: {type: json, nullable: true}
+      loadout: {type: Loadout, nullable: true, relation: owned}
+storage:
+  Loadout: {table: db#loadout, storageKey: id, columns: {id: public_id, label: label}}
+  Participant:
+    table: db#participant
+    storageKey: id
+    columns: {id: public_id, rank: rank, raw: raw}
+    children:
+      loadout: {ownerKey: loadout_id, onDelete: cascade}
+operations:
+  findParticipants:
+    output: Participant
+    list:
+      fields:
+        id: {sort: true}
+        rank: {filter: [eq, gt, lt], sort: true}
+      sort: {default: [{field: rank, direction: desc}], tiebreaker: id}
+      pagination: {strategy: cursor, limit: {default: 20, max: 100}}

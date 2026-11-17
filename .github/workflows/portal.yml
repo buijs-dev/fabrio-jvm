@@ -1,0 +1,27 @@
+name: Portal
+
+# Builds the developer portal (portal/) and deploys it to GitHub Pages. PORTAL_SITE and PORTAL_BASE
+# (repository variables) say where it is served; without them it is https://fabrio.buijs.dev/.
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  portal:
+    uses: buijs-dev/ci-templates/.github/workflows/astro-pages.yml@main
+    with:
+      root-dir: portal
+      # .env carries PORTAL_SITE and PORTAL_BASE into the build step (astro.config.mjs); empty means the default.
+      prebuild: |
+        printf 'PORTAL_SITE=%s\nPORTAL_BASE=%s\n' '${{ vars.PORTAL_SITE }}' '${{ vars.PORTAL_BASE }}' > .env
